@@ -30,6 +30,9 @@
 
 //#include "DSP28x_Project.h"     // DSP28x Headerfile
 
+#include <stdio.h>
+#include <file.h>
+
 #include "f2802x_common/include/DSP28x_Project.h"
 
 #include "f2802x_common/include/clk.h"
@@ -43,7 +46,24 @@
 #include "f2802x_common/include/sci.h"
 #include "f2802x_common/include/sci_io.h"
 
+/*
+ * Primary include file for the F2802x controller.
+ */
+#include "f2802x_headers/include/F2802x_Device.h"
+
 #include "main.h"
+
+/*
+ * Global variables
+ *
+ * The use of global variables is often discouraged. You should understand the implications
+ * and use them only when it is an advantage over the alternatives.
+ *
+ * The static keyword avoid access to the global from different source files.
+ *
+ * Use the naming convention g_iName for globals, g for global, and i for integer.
+ */
+//static long g_iZulu = 0;
 
 void main()
 {
@@ -51,6 +71,12 @@ void main()
     // WARNING: Always ensure you call memcpy before running any functions from RAM
     // InitSysCtrl includes a call to a RAM based function and without a call to
     // memcpy first, the processor will go "into the weeds"
+
+    /*
+     * Ensure you call this memcpy before running any functions from RAM
+     *
+     * You should also have a look at the *.cmd file for the linker.
+     */
 
 //       #ifdef _FLASH
 //        memcpy(&RamfuncsRunStart, &RamfuncsLoadStart, (size_t)&RamfuncsLoadSize);
@@ -119,13 +145,47 @@ void main()
     GPIO_setHigh(myGPIO, GPIO_Number_2);
     GPIO_setHigh(myGPIO, GPIO_Number_3);
 
-    for(;;) // Main loop
+    GpioDataRegs.GPADAT.all = 0x0000000F;
+
+    for(;;)
     {
         DELAY_US(1000000);
+        GpioDataRegs.GPADAT.all--;
+        if(GpioDataRegs.GPADAT.all == 0)
+            GpioDataRegs.GPADAT.all = 0x0000000F;
+    }
+//    for(;;)
+//    {
+//        DELAY_US(1000000);
+//        GpioDataRegs.GPADAT.all = 0x00000001;
+//
+////        if(GpioDataRegs.GPADAT.all > 0x00000000)
+////        {
+////            DELAY_US(1000000);
+////            GpioDataRegs.GPADAT.all--;
+////        }
+////        else
+////        {
+////            DELAY_US(1000000);
+////            GpioDataRegs.GPADAT.all = 0x0000000F;
+////        }
+//    }
+
+    for(;;) // Main loop
+    {
+        //int x = 2;
+        //int y = 7;
+
+        //g_iZulu = x + y;
+
+        //while(1) asm(" NOP");
+
+        DELAY_US(1000000);
         GPIO_setHigh(myGPIO, GPIO_Number_0);
-        GPIO_setHigh(myGPIO, GPIO_Number_2);
+        GPIO_setHigh(myGPIO, GPIO_Number_3);
         DELAY_US(1000000);
         GPIO_setLow(myGPIO, GPIO_Number_0);
-        GPIO_setLow(myGPIO, GPIO_Number_2);
+        GPIO_setLow(myGPIO, GPIO_Number_3);
     }
+
 }
