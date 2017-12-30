@@ -114,10 +114,10 @@ void main(void)
         {
             GpioDataRegs.GPASET.bit.GPIO3 = 1;
             GpioDataRegs.GPACLEAR.bit.GPIO2 = 1;
-            DELAY_US(200000);
+            //DELAY_US(200000);
             GpioDataRegs.GPASET.bit.GPIO2 = 1;
             GpioDataRegs.GPACLEAR.bit.GPIO3 = 1;
-            DELAY_US(200000);
+            //DELAY_US(200000);
         }
 //        if (interrupt_counter > 5)
 //        {

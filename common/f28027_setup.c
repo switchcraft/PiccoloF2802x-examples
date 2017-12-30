@@ -94,7 +94,7 @@ void system_setup(void)
     SysCtrlRegs.LOSPCP.all = 0x0002;
     SysCtrlRegs.XCLK.bit.XCLKOUTDIV=00; // Set XCLKOUT = SYSCLKOUT/4
 
-//    SysCtrlRegs.PCLKCR0.bit.ADCENCLK = 1;       // ADC
+    SysCtrlRegs.PCLKCR0.bit.ADCENCLK = 1;       // ADC
 //    SysCtrlRegs.PCLKCR3.bit.COMP1ENCLK = 1;     // COMP1
 //    SysCtrlRegs.PCLKCR3.bit.COMP2ENCLK = 1;     // COMP2
 //    SysCtrlRegs.PCLKCR3.bit.CPUTIMER0ENCLK = 1; // CPU Timer-0
@@ -161,3 +161,73 @@ void pie_setup(void)
 }
 
 
+void adc_setup(void)
+{
+    EALLOW;
+    AdcRegs.ADCCTL1.bit.ADCBGPWD  = 1;      // Power ADC BG
+    AdcRegs.ADCCTL1.bit.ADCREFPWD = 1;      // Power reference
+    AdcRegs.ADCCTL1.bit.ADCPWDN   = 1;      // Power ADC
+    AdcRegs.ADCCTL1.bit.ADCENABLE = 1;      // Enable ADC
+    AdcRegs.ADCCTL1.bit.ADCREFSEL = 0;      // Select internal BG
+    EDIS;
+
+    DELAY_US(ADC_usDELAY);         // Delay before converting ADC channels
+
+    EALLOW;
+    /* The ADCCTL registers contains various general
+     * configuration options for the ADC.
+     */
+    AdcRegs.ADCCTL1.bit.TEMPCONV = 1; /* Connect the internal temperature sensor to ADC input 5. */
+    AdcRegs.ADCCTL1.bit.INTPULSEPOS = 1; /* Interrupt pulse is generated one clock cycle prior to the ADC result latching into result register.*/
+
+    AdcRegs.INTSEL1N2.bit.INT1E = 1;
+    AdcRegs.INTSEL1N2.bit.INT1CONT = 0;
+    AdcRegs.INTSEL1N2.bit.INT1SEL = 0; /* Select "End of conversion 0" as the interrupt trigger. */
+    AdcRegs.INTSEL1N2.bit.INT2E = 1;
+    AdcRegs.INTSEL1N2.bit.INT2CONT = 0;
+    AdcRegs.INTSEL1N2.bit.INT2SEL = 1; /* Select "End of conversion 1" as the interrupt trigger. */
+
+    AdcRegs.ADCSOC0CTL.bit.CHSEL = 5; /* Select channel 5 for ADC SOC 0 */
+    AdcRegs.ADCSOC0CTL.bit.TRIGSEL = 0; /* Select software as the trigger source.  */
+    AdcRegs.ADCSOC0CTL.bit.ACQPS = 0x24; /* Set the sample and hold window to 36+1 clock cycles */
+
+    AdcRegs.ADCSOC1CTL.bit.CHSEL = 0; /* ADC channel 0, available on J5 pin 6. */
+    AdcRegs.ADCSOC1CTL.bit.TRIGSEL = 0;
+    AdcRegs.ADCSOC1CTL.bit.ACQPS = 0x24;
+
+    EDIS;
+}
+
+void sci_setup(void)
+{
+    /*
+     * Configure the SCI communication control register.
+     */
+    SciaRegs.SCICCR.bit.STOPBITS = 1;
+    SciaRegs.SCICCR.bit.LOOPBKENA = 0;
+    SciaRegs.SCICCR.bit.PARITY = 0;
+    SciaRegs.SCICCR.bit.PARITYENA = 0;
+    SciaRegs.SCICCR.bit.LOOPBKENA = 0;
+    SciaRegs.SCICCR.bit.ADDRIDLE_MODE = 0;
+    SciaRegs.SCICCR.bit.SCICHAR = 7;
+
+    SciaRegs.SCICTL1.bit.RXENA = 1;
+    SciaRegs.SCICTL1.bit.TXENA = 1;
+    SciaRegs.SCICTL1.bit.SLEEP = 0;
+    SciaRegs.SCICTL1.bit.TXWAKE = 0;
+    SciaRegs.SCICTL1.bit.RXERRINTENA = 0;
+    SciaRegs.SCICTL1.bit.SWRESET = 0;
+
+    SciaRegs.SCICTL2.bit.TXINTENA = 1;
+    SciaRegs.SCICTL2.bit.RXBKINTENA = 1;
+
+    SciaRegs.SCIHBAUD = 0x0000;
+    SciaRegs.SCILBAUD = 0x00C2;
+
+    SciaRegs.SCICTL1.bit.SWRESET = 1;
+}
+
+void timer_setup(void)
+{
+
+}

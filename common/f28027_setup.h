@@ -31,8 +31,13 @@
 #ifndef F28027_SETUP_H_
 #define F28027_SETUP_H_
 
+#define ADC_usDELAY  1000L
+
+
 void system_setup(void);
 void pie_setup(void);
-
+void adc_setup(void);
+void sci_setup(void);
+void timer_setup(void);
 
 #endif /* MAIN_H_ */
