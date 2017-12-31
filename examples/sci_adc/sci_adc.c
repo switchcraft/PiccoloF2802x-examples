@@ -40,6 +40,38 @@ void main(void)
     system_setup();
     pie_setup();
     adc_setup();
+    sci_setup();
+
+    /* Configure the GPIO ports connected to the FTDI device. */
+    EALLOW;
+    GpioCtrlRegs.GPACTRL.bit.QUALPRD3 =
+    GpioCtrlRegs.GPAQSEL2.bit.GPIO28 = 11; /* No qualification, i.e. asynchronous */
+
+    GpioCtrlRegs.GPAMUX2.bit.GPIO28 = 1; /* Configure port 28 as SCI RX. */
+    GpioCtrlRegs.GPAPUD.bit.GPIO28 = 0; /* Enable pullup on the RX pin. */
+
+    GpioCtrlRegs.GPAMUX2.bit.GPIO29 = 1; /* Configure port 29 as SCI TX. */
+    GpioCtrlRegs.GPAPUD.bit.GPIO29 = 1; /* Disable pullup on the TX pin. */
+    EDIS;
+
+    /* Configure the GPIO ports connected to the LED's */
+    EALLOW;
+    GpioDataRegs.GPASET.bit.GPIO0 = 1;         /* Load the output latch */
+    GpioCtrlRegs.GPAMUX1.bit.GPIO0 = 0;        /* Configure the MUX for GPIO */
+    GpioCtrlRegs.GPADIR.bit.GPIO0 = 1;         /* Configure the port for output */
+
+    GpioDataRegs.GPASET.bit.GPIO1 = 1;         /* Load the output latch */
+    GpioCtrlRegs.GPAMUX1.bit.GPIO1 = 0;        /* Configure the MUX for GPI1 */
+    GpioCtrlRegs.GPADIR.bit.GPIO1 = 1;         /* Configure the port for output */
+
+    GpioDataRegs.GPASET.bit.GPIO2 = 1;         /* Load the output latch */
+    GpioCtrlRegs.GPAMUX1.bit.GPIO2 = 0;        /* Configure the MUX for GPI2 */
+    GpioCtrlRegs.GPADIR.bit.GPIO2 = 1;         /* Configure the port for output */
+
+    GpioDataRegs.GPASET.bit.GPIO3 = 1;         /* Load the output latch */
+    GpioCtrlRegs.GPAMUX1.bit.GPIO3 = 0;        /* Configure the MUX for GPI3 */
+    GpioCtrlRegs.GPADIR.bit.GPIO3 = 1;         /* Configure the port for output */
+    EDIS;
 
     int temperature = 0;
     int potmeter = 0;
@@ -48,6 +80,7 @@ void main(void)
 
     for(;;)
     {
+        scia_tx_string("=========================================\r\n\0");
         scia_tx_string("Starting conversion SOC0.\r\n\0");
         AdcRegs.ADCSOCFRC1.bit.SOC0 = 1;
 
@@ -56,8 +89,11 @@ void main(void)
         AdcRegs.ADCINTFLGCLR.bit.ADCINT1 = 1;
         scia_tx_string("SOC0 result:\0");
         scia_tx_number_as_string(temperature);
+        scia_tx_string("\r\n\0");
 
-        DELAY_US(10000);
+        GpioDataRegs.GPASET.bit.GPIO3 = 1;
+        DELAY_US(100000);
+        GpioDataRegs.GPACLEAR.bit.GPIO3 = 1;
 
         scia_tx_string("Starting conversion SOC1.\r\n\0");
         AdcRegs.ADCSOCFRC1.bit.SOC1 = 1;
@@ -65,11 +101,12 @@ void main(void)
         while(AdcRegs.ADCINTFLG.bit.ADCINT2 == 0){}
         potmeter = AdcResult.ADCRESULT1;
         AdcRegs.ADCINTFLGCLR.bit.ADCINT2 = 1;
-        scia_tx_string("\r\nSOC1 result:\0");
+        scia_tx_string("SOC1 result:\0");
         scia_tx_number_as_string(potmeter);
+        scia_tx_string("\r\n\0");
 
 
-        DELAY_US(10000);
+        DELAY_US(100000);
     }
 }
 
@@ -92,14 +129,22 @@ void scia_tx_string(char * data)
 
 void scia_tx_number_as_string(uint16_t data)
 {
-    char lower_byte = data & 0x00ff;
-    char higher_byte = (data & 0xff00) >> 8;
+    char nibble[4] = {0,0,0,0};
+    char string[5] = {0,0,0,0};
+    int i = 0;
 
-    char string[3];
+    /**
+     * Split 16 bit integer into 4-bit BCD coded nibbles.
+     */
+    while (data > 0) {
+       nibble[i++] = (data % 10);
+       data /= 10;
+    }
 
-    string[0] = num_to_ascii(higher_byte);
-    string[1] = num_to_ascii(lower_byte);
-    string[2] = '\0';
+    for(i = 0; i < 4; i++)
+        string[i] = num_to_ascii(nibble[3-i]);
+
+    string[4] = '\0';
 
     scia_tx_string(string);
 }
@@ -113,28 +158,36 @@ char num_to_ascii(char data)
 
     switch(data)
     {
-    case 48:
-        return_data = '0';
-    case 49:
+    case 1:
         return_data = '1';
-    case 50:
+        break;
+    case 2:
         return_data = '2';
-    case 51:
+        break;
+    case 3:
         return_data = '3';
-    case 52:
+        break;
+    case 4:
         return_data = '4';
-    case 53:
+        break;
+    case 5:
         return_data = '5';
-    case 54:
+        break;
+    case 6:
         return_data = '6';
-    case 55:
+        break;
+    case 7:
         return_data = '7';
-    case 56:
+        break;
+    case 8:
         return_data = '8';
-    case 57:
+        break;
+    case 9:
         return_data = '9';
+        break;
     default:
         return_data = '0';
+        break;
     }
 
     return return_data;

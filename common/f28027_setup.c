@@ -108,7 +108,7 @@ void system_setup(void)
     SysCtrlRegs.PCLKCR3.bit.GPIOINENCLK = 1;    // GPIO
 //    SysCtrlRegs.PCLKCR0.bit.HRPWMENCLK=1;       // HRPWM
 //    SysCtrlRegs.PCLKCR0.bit.I2CAENCLK = 1;      // I2C
-//    SysCtrlRegs.PCLKCR0.bit.SCIAENCLK = 1;      // SCI-A
+    SysCtrlRegs.PCLKCR0.bit.SCIAENCLK = 1;      // SCI-A
 //    SysCtrlRegs.PCLKCR0.bit.SPIAENCLK = 1;      // SPI-A
 
 //    SysCtrlRegs.PCLKCR0.bit.TBCLKSYNC = 1;      // Enable TBCLK within the EPWM
@@ -200,6 +200,24 @@ void adc_setup(void)
 
 void sci_setup(void)
 {
+    /*
+     * Configure SCI TX buffer
+     */
+    SciaRegs.SCIFFTX.bit.SCIRST = 1;
+    SciaRegs.SCIFFTX.bit.SCIFFENA = 1;
+    SciaRegs.SCIFFTX.bit.TXFIFOXRESET = 1;
+    SciaRegs.SCIFFTX.bit.TXFFINTCLR = 1;
+
+    SciaRegs.SCIFFRX.bit.RXFIFORESET = 1;
+    SciaRegs.SCIFFRX.bit.RXFFINTCLR = 1;
+    SciaRegs.SCIFFRX.bit.RXFFIENA = 1;
+
+    SciaRegs.SCIFFCT.bit.ABD = 0;
+    SciaRegs.SCIFFCT.bit.ABDCLR = 0;
+    SciaRegs.SCIFFCT.bit.CDC = 0;
+    SciaRegs.SCIFFCT.bit.FFTXDLY = 0;
+
+
     /*
      * Configure the SCI communication control register.
      */
